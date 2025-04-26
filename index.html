@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Aviator Predictor</title>
+    <style>
+        :root {
+            --primary: #4fc3f7;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --bg-dark: #121a2e;
+            --card-bg: #1a233a;
+            --content-bg: #0f1626;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--bg-dark);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .signal-display {
+            background: var(--content-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .signal-display::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .current-multiplier {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: var(--success);
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .prediction {
+            font-size: 1.1rem;
+            color: var(--warning);
+            margin-top: 10px;
+            background: rgba(255, 152, 0, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .signal-strength {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .strength-bars {
+            display: flex;
+            margin-left: 8px;
+        }
+        
+        .strength-bar {
+            width: 4px;
+            height: 12px;
+            background: #555;
+            margin: 0 2px;
+            border-radius: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            background: #3a3a8a;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        #startBtn {
+            background: linear-gradient(135deg, #4a6bff, #3a3a8a);
+        }
+        
+        #cashoutBtn {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:disabled {
+            background: #333 !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .history {
+            margin-top: 30px;
+        }
+        
+        .history-title {
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .history-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .history-item {
+            background: var(--content-bg);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .crash {
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .safe {
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .disclaimer {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #777;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.4;
+        }
+        
+        .signal-type {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .signal-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 5px;
+            text-transform: uppercase;
+        }
+        
+        .tag-strong {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+        
+        .tag-weak {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--danger);
+        }
+        
+        .tag-medium {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--warning);
+        }
+        
+        .airplane {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Aviator Signal Pro</h1>
+        
+        <div class="signal-display">
+            <div class="airplane">✈️</div>
+            <div>Current Multiplier:</div>
+            <div class="current-multiplier">1.00x</div>
+            <div class="signal-type">
+                Signal: <span class="prediction">Analyzing...</span>
+                <span class="signal-tag tag-medium" id="signalTag">Medium</span>
+            </div>
+            <div class="signal-strength">
+                Confidence: 
+                <div class="strength-bars" id="strengthBars">
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">START ROUND</button>
+            <button id="cashoutBtn" disabled>CASH OUT</button>
+        </div>
+        
+        <div class="history">
+            <div class="history-title">
+                <span>Recent Results</span>
+                <span style="font-size:0.8rem; color:#aaa">Next round in: <span id="countdown">5</span>s</span>
+            </div>
+            <div class="history-items" id="historyItems">
+                <!-- History will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="disclaimer">
+        Note: This is a simulation for entertainment purposes only. Real Aviator games use provably fair algorithms with random outcomes. No prediction can guarantee future results. Always gamble responsibly.
+    </div>
+
+    <script>
+        // Enhanced game variables
+        let currentMultiplier = 1.00;
+        let gameRunning = false;
+        let gameInterval;
+        let crashPoint;
+        let history = [];
+        let roundCountdown = 5;
+        let countdownInterval;
+        let streakCount = 0;
+        let lastCrashMultiplier = 1.0;
+        
+        // DOM elements
+        const currentMultiplierEl = document.querySelector('.current-multiplier');
+        const predictionEl = document.querySelector('.prediction');
+        const signalTagEl = document.getElementById('signalTag');
+        const strengthBarsEl = document.getElementById('strengthBars');
+        const startBtn = document.getElementById('startBtn');
+        const cashoutBtn = document.getElementById('cashoutBtn');
+        const historyItemsEl = document.getElementById('historyItems');
+        const countdownEl = document.getElementById('countdown');
+        
+        // More realistic crash point generation
+        function generateCrashPoint() {
+            // Base random value
+            let baseRandom = Math.random();
+            
+            // Streak adjustment - more likely to end streaks
+            if (streakCount > 3) {
+                baseRandom = Math.min(baseRandom, 0.3 + streakCount * 0.1);
+            }
+            
+            // Recent crash adjustment
+            if (lastCrashMultiplier > 10) {
+                baseRandom = Math.min(baseRandom, 0.5);
+            }
+            
+            // Generate crash point with realistic distribution
+            if (baseRandom < 0.55) return (1 + Math.pow(Math.random(), 2) * 2).toFixed(2); // 1x-3x (55%)
+            if (baseRandom < 0.85) return (1 + Math.pow(Math.random(), 1.5) * 10).toFixed(2); // 1x-11x (30%)
+            if (baseRandom < 0.95) return (1 + Math.pow(Math.random(), 1.2) * 30).toFixed(2); // 1x-31x (10%)
+            return (1 + Math.pow(Math.random(), 1.1) * 100).toFixed(2); // 1x-101x (5%)
+        }
+        
+        // Generate realistic prediction with patterns
+        function generatePrediction() {
+            // Analyze last 5 rounds
+            const last5 = history.slice(0, 5);
+            const crashCount = last5.filter(r => r.crashed).length;
+            const avgMultiplier = last5.length > 0 ? 
+                last5.reduce((sum, r) => sum + parseFloat(r.value), 0) / last5.length : 1.0;
+            
+            // Prediction logic based on patterns
+            let prediction, confidence, signalType;
+            
+            if (last5.length >= 3 && last5[0].crashed && last5[1].crashed && last5[2].crashed) {
+                // After 3 crashes in a row, predict higher multiplier
+                const min = 3 + Math.random() * 5;
+                const max = min + 5 + Math.random() * 10;
+                prediction = `${min.toFixed(1)}x - ${max.toFixed(1)}x`;
+                confidence = 70 + Math.random() * 20;
+                signalType = "strong";
+            } 
+            else if (avgMultiplier > 5 && crashCount < 3) {
+                // After high multipliers, predict crash soon
+                const min = 1 + Math.random() * 2;
+                const max = min + 1 + Math.random() * 2;
+                prediction = `${min.toFixed(1)}x - ${max.toFixed(1)}x`;
+                confidence = 60 + Math.random() * 25;
+                signalType = "medium";
+            }
+            else {
+                // Default prediction
+                const min = 1.5 + Math.random() * 3;
+                const max = min + 2 + Math.random() * 8;
+                prediction = `${min.toFixed(1)}x - ${max.toFixed(1)}x`;
+                confidence = 40 + Math.random() * 40;
+                signalType = confidence > 60 ? "strong" : (confidence > 40 ? "medium" : "weak");
+            }
+            
+            // Update signal display
+            signalTagEl.textContent = signalType.charAt(0).toUpperCase() + signalType.slice(1);
+            signalTagEl.className = `signal-tag tag-${signalType}`;
+            
+            // Update strength bars
+            updateStrengthBars(confidence);
+            
+            return prediction;
+        }
+        
+        function updateStrengthBars(percent) {
+            const bars = strengthBarsEl.querySelectorAll('.strength-bar');
+            const activeCount = Math.min(5, Math.ceil(percent / 20));
+            
+            bars.forEach((bar, index) => {
+                bar.style.background = index < activeCount ? 
+                    (activeCount > 3 ? "var(--success)" : 
+                     activeCount > 2 ? "var(--warning)" : "var(--danger)") : "#555";
+                bar.style.height = index < activeCount ? `${12 + index * 2}px` : "12px";
+            });
+        }
+        
+        // Start countdown between rounds
+        function startCountdown() {
+            roundCountdown = 5;
+            countdownEl.textContent = roundCountdown;
+            clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                roundCountdown--;
+                countdownEl.textContent = roundCountdown;
+                
+                if (roundCountdown <= 0) {
+                    clearInterval(countdownInterval);
+                    if (!gameRunning) {
+                        startRound();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Start a new round
+        function startRound() {
+            if (gameRunning) return;
+            
+            gameRunning = true;
+            currentMultiplier = 1.00;
+            crashPoint = parseFloat(generateCrashPoint());
+            predictionEl.textContent = generatePrediction();
+            
+            startBtn.disabled = true;
+            cashoutBtn.disabled = false;
+            
+            // Variable speed increase for more realism
+            let speed = 50; // ms
+            let acceleration = 0;
+            
+            gameInterval = setInterval(() => {
+                // Accelerate over time
+                acceleration += 0.0005;
+                speed = Math.max(10, speed - acceleration);
+                
+                currentMultiplier += 0.01 * (1 + acceleration * 10);
+                currentMultiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+                
+                // Check if crashed
+                if (currentMultiplier >= crashPoint) {
+                    endRound(false);
+                }
+            }, speed);
+        }
+        
+        // End the round
+        function endRound(cashedOut) {
+            clearInterval(gameInterval);
+            gameRunning = false;
+            
+            if (!cashedOut) {
+                currentMultiplierEl.textContent = 'CRASHED!';
+                currentMultiplierEl.className = 'current-multiplier crash';
+                streakCount = 0;
+                lastCrashMultiplier = currentMultiplier;
+            } else {
+                currentMultiplierEl.className = 'current-multiplier safe';
+                streakCount++;
+            }
+            
+            // Add to history
+            history.unshift({
+                value: (!cashedOut ? crashPoint : currentMultiplier).toFixed(2) + 'x',
+                crashed: !cashedOut
+            });
+            
+            // Update history display
+            updateHistory();
+            
+            // Reset for next round
+            startBtn.disabled = false;
+            cashoutBtn.disabled = true;
+            predictionEl.textContent = "Analyzing...";
+            
+            setTimeout(() => {
+                currentMultiplier = 1.00;
+                currentMultiplierEl.textContent = '1.00x';
+                currentMultiplierEl.className = 'current-multiplier';
+                startCountdown();
+            }, 2000);
+        }
+        
+        // Update history display
+        function updateHistory() {
+            historyItemsEl.innerHTML = '';
+            history.slice(0, 12).forEach(item => {
+                const el = document.createElement('div');
+                el.className = `history-item ${item.crashed ? 'crash' : 'safe'}`;
+                el.textContent = item.value;
+                historyItemsEl.appendChild(el);
+            });
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startRound);
+        cashoutBtn.addEventListener('click', () => endRound(true));
+        
+        // Initialize with realistic fake history
+        function generateRealisticHistory() {
+            const patterns = [
+                [1.2, 1.5, 1.8, 2.3, 45.7], // Small multipliers then a big one
+                [1.1, 1.3, 1.4, 1.6, 3.2, 10.5],
+                [2.5, 1.8, 1.9, 1.7, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1], // Decreasing pattern
+                [1.5, 1.6, 1.4, 1.7, 1.3, 1.8, 1.2, 1.9, 1.1, 2.0], // Alternating
+                [1.1, 1.1, 1.1, 1.1, 1.1, 100.0] // Several small then a huge one
+            ];
+            
+            const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            
+            selectedPattern.forEach(val => {
+                history.push({
+                    value: val.toFixed(2) + 'x',
+                    crashed: true
+                });
+            });
+            
+            updateHistory();
+            startCountdown();
+        }
+        
+        generateRealisticHistory();
+    </script>
+</body>
+</html>
